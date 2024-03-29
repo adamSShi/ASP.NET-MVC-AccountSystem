@@ -1,0 +1,33 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>登入</h2>
+
+@using (Html.BeginForm("Login", "Account", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        <label for="username">使用者名稱：</label>
+        <input type="text" id="username" name="username" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">密碼：</label>
+        <input type="password" id="password" name="password" class="form-control" />
+    </div>
+
+    <div>
+        <span id="login-error" class="text-danger">
+            @Html.ValidationMessage("")
+        </span>
+    </div>
+
+
+    <button type="submit" class="btn btn-primary">登入</button>
+}
+
+<p>
+    還沒有帳戶？<a href="@Url.Action("Register", "Account")">註冊</a>
+</p>
