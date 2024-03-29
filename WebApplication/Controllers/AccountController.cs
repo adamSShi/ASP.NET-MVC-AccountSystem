@@ -25,21 +25,37 @@ namespace WebApplication.Controllers
         [HttpPost]
         public ActionResult Login(string username, string password)
         {
+            //未正確填寫驗證
+            if (username == "" || password == "")
+            {
+                ModelState.AddModelError("", "請輸入用戶名和密碼");
+                return View("Index");
+            }
+
             // 查詢資料
-            User user = db.Users.FirstOrDefault(u => u.UserName == username);
+            var user = db.Users.FirstOrDefault(u => u.UserName == username);
 
-            // 0:HashPassword 1:Salt
-            string[] passwordHash = user.Password.Split(':');
-            bool isPasswordPass = passwordSecurify.VerifyPassword(password, passwordHash[0], passwordHash[1]);
-
-            // 驗證資料
-            if (user == null || !isPasswordPass)
+            // 驗證使用者名稱
+            if (user == null)
             {
                 ModelState.AddModelError("", "帳號或密碼錯誤");
                 return View("Index");
             }
 
+            // 0:HashPassword 1:Salt
+            string[] passwordHash = user.Password.Split(':');
+            bool isPasswordPass = passwordSecurify.VerifyPassword(password, passwordHash[0], passwordHash[1]);
+
+            //驗證密碼
+            if (!isPasswordPass)
+            {
+                ViewBag.UserName = username;
+                ModelState.AddModelError("", "帳號或密碼錯誤");
+                return View("Index");
+            }
+
             FormsAuthentication.SetAuthCookie(username, false);
+            TempData["UserName"] = username;
 
             // 導向首頁
             return RedirectToAction("Index", "Home");
@@ -52,8 +68,14 @@ namespace WebApplication.Controllers
         }
 
         [HttpPost]
-        public ActionResult Register([Bind(Include = "ID,UserName,Email,Password,UserPermissions")] User user)
+        public ActionResult Register([Bind(Include = "ID,UserName,Email,Password,UserPermissions")] User user,string comfirmpassword)
         {
+            if(comfirmpassword != user.Password)
+            {
+                ModelState.AddModelError("", "密碼前後不一致");
+                return View(user);
+            }
+
             user.UserPermissions = Permissions.User;
 
             if (ModelState.IsValid)
@@ -76,6 +98,8 @@ namespace WebApplication.Controllers
         {
             // 清除身份验证 cookie
             FormsAuthentication.SignOut();
+
+            TempData["UserName"] = "";
 
             // 可以选择重定向到登出页面或任何其他页面
             return RedirectToAction("Index", "Home");
